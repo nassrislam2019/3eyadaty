@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3eyadaty - Medical Management System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .sidebar-link.active { background-color: #0f766e; color: white; }
+        .glass-panel { background: white; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .modal { transition: opacity 0.3s ease; }
+        .hidden-modal { opacity: 0; pointer-events: none; }
+        .visible-modal { opacity: 1; pointer-events: auto; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-10 flex-shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-gray-100">
+            <i class="fa-solid fa-staff-snake text-teal-700 text-2xl mr-3"></i>
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight">3eyadaty</h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <button onclick="router('dashboard')" id="nav-dashboard" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-chart-line w-6"></i> Dashboard
+            </button>
+            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Clinical</div>
+            <button onclick="router('patients')" id="nav-patients" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-users w-6"></i> Patients
+            </button>
+            <button onclick="router('doctors')" id="nav-doctors" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-user-doctor w-6"></i> Doctors
+            </button>
+            <button onclick="router('appointments')" id="nav-appointments" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-calendar-check w-6"></i> Appointments
+            </button>
+            
+            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Financial</div>
+            <button onclick="router('invoices')" id="nav-invoices" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> Invoices
+            </button>
+            <button onclick="router('recurring')" id="nav-recurring" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-money-bill-transfer w-6"></i> Recurring (MIS)
+            </button>
+            
+            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
+            <button onclick="router('services')" id="nav-services" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-stethoscope w-6"></i> Services
+            </button>
+            <button onclick="router('branches')" id="nav-branches" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                <i class="fa-solid fa-building w-6"></i> Branches
+            </button>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs">
+                    AD
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-700">Admin User</p>
+                    <p class="text-xs text-gray-500">Super Admin</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <!-- Header -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10">
+            <h2 id="page-title" class="text-xl font-bold text-gray-800">Dashboard</h2>
+            <div class="flex items-center space-x-4">
+                <span id="current-date" class="text-sm text-gray-500 font-medium"></span>
+                <button onclick="resetData()" class="text-xs text-red-500 hover:text-red-700 underline">Reset Demo Data</button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div id="main-container" class="flex-1 overflow-auto p-8 relative">
+            <!-- Views injected here by JS -->
+        </div>
+    </main>
+
+    <!-- GLOBAL MODAL -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden-modal modal">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 id="modal-title" class="text-lg font-bold text-gray-800">Add New</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div id="modal-content" class="p-6">
+                <!-- Forms injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA LAYER (Simulating MySQL) ---
+        const DB_KEY = '3eyadaty_db_v1';
+        
+        const initialData = {
+            patients: [
+                { id: 1, name: "Ahmed Ali", phone: "01012345678", dob: "1990-05-15", gender: "Male", history: "Hypertension" },
+                { id: 2, name: "Sara Mohamed", phone: "01198765432", dob: "1985-10-20", gender: "Female", history: "None" }
+            ],
+            doctors: [
+                { id: 1, name: "Dr. Khaled", specialization: "Dentist", commission: 20, branch: "Main" },
+                { id: 2, name: "Dr. Mona", specialization: "Dermatology", commission: 15, branch: "Downtown" }
+            ],
+            services: [
+                { id: 1, name: "Consultation", price: 300, category: "General" },
+                { id: 2, name: "Teeth Cleaning", price: 450, category: "Dental" }
+            ],
+            appointments: [
+                { id: 1, patientId: 1, doctorId: 1, date: "2023-10-25T14:00", status: "completed" },
+                { id: 2, patientId: 2, doctorId: 2, date: "2023-10-26T10:00", status: "pending" }
+            ],
+            invoices: [
+                { id: 1001, patientId: 1, doctorId: 1, total: 300, docShare: 60, net: 240, status: 'paid', date: '2023-10-25' }
+            ],
+            recurring: [
+                { id: 1, name: "Clinic Rent", type: "deduction", amount: 5000, frequency: "monthly", dueDate: "2023-10-01", status: "paid" },
+                { id: 2, name: "Nurse Salary", type: "deduction", amount: 2000, frequency: "monthly", dueDate: "2023-10-05", status: "unpaid" },
+                { id: 3, name: "Vending Machine", type: "addition", amount: 500, frequency: "monthly", dueDate: "2023-10-15", status: "paid" }
+            ],
+            branches: [
+                { id: 1, name: "Main Branch", address: "Cairo, Maadi" },
+                { id: 2, name: "Downtown", address: "Cairo, Tahrir" }
+            ]
+        };
+
+        // Initialize DB
+        let db = JSON.parse(localStorage.getItem(DB_KEY));
+        if (!db) {
+            db = initialData;
+            saveDB();
+        }
+
+        function saveDB() {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+            renderCurrentView(); // Re-render active view on data change
+        }
+
+        function resetData() {
+            if(confirm("Reset all data to defaults?")) {
+                db = initialData;
+                saveDB();
+                location.reload();
+            }
+        }
+
+        // --- CORE UTILS ---
+        const $ = (id) => document.getElementById(id);
+        const formatMoney = (amount) => new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(amount);
+        
+        let currentView = 'dashboard';
+
+        // --- ROUTING ---
+        function router(view) {
+            currentView = view;
+            
+            // Update Sidebar
+            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+            if($(`nav-${view}`)) $(`nav-${view}`).classList.add('active');
+            
+            // Update Title
+            $('page-title').innerText = view.charAt(0).toUpperCase() + view.slice(1);
+            
+            // Render View
+            const container = $('main-container');
+            container.innerHTML = '';
+            
+            switch(view) {
+                case 'dashboard': renderDashboard(container); break;
+                case 'patients': renderCRUD(container, 'patients', ['Name', 'Phone', 'Gender'], ['name', 'phone', 'gender']); break;
+                case 'doctors': renderCRUD(container, 'doctors', ['Name', 'Specialization', 'Commission %'], ['name', 'specialization', 'commission']); break;
+                case 'services': renderCRUD(container, 'services', ['Name', 'Price', 'Category'], ['name', 'price', 'category']); break;
+                case 'appointments': renderAppointments(container); break;
+                case 'invoices': renderInvoices(container); break;
+                case 'recurring': renderRecurring(container); break;
+                case 'branches': renderCRUD(container, 'branches', ['Name', 'Address'], ['name', 'address']); break;
+            }
+        }
+
+        function renderCurrentView() {
+            router(currentView);
+        }
+
+        // --- VIEW CONTROLLERS ---
+
+        // 1. DASHBOARD
+        function renderDashboard(container) {
+            // Calculations
+            const totalPatients = db.patients.length;
+            const totalDoctors = db.doctors.length;
+            const totalRevenue = db.invoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0);
+            const netIncome = db.invoices.reduce((sum, inv) => sum + parseFloat(inv.net), 0);
+            
+            // Recurring Calc
+            const deductions = db.recurring.filter(r => r.type === 'deduction').reduce((sum, r) => sum + parseFloat(r.amount), 0);
+            const additions = db.recurring.filter(r => r.type === 'addition').reduce((sum, r) => sum + parseFloat(r.amount), 0);
+            
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    ${statCard('Total Patients', totalPatients, 'fa-users', 'bg-blue-500')}
+                    ${statCard('Total Revenue', formatMoney(totalRevenue), 'fa-wallet', 'bg-green-500')}
+                    ${statCard('Net Income (After Share)', formatMoney(netIncome), 'fa-chart-line', 'bg-teal-600')}
+                    ${statCard('Recurring Expenses', formatMoney(deductions), 'fa-money-bill-wave', 'bg-red-500')}
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recurring MIS -->
+                    <div class="glass-panel rounded-xl p-6 lg:col-span-2">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4">Recurring Items Summary (MIS)</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="p-4 bg-red-50 rounded-lg border border-red-100">
+                                <p class="text-xs text-red-500 uppercase font-bold">Total Deductions</p>
+                                <p class="text-xl font-bold text-gray-800">${formatMoney(deductions)}</p>
+                            </div>
+                            <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+                                <p class="text-xs text-green-600 uppercase font-bold">Total Additions</p>
+                                <p class="text-xl font-bold text-gray-800">${formatMoney(additions)}</p>
+                            </div>
+                            <div class="p-4 bg-orange-50 rounded-lg border border-orange-100">
+                                <p class="text-xs text-orange-600 uppercase font-bold">Unpaid Items</p>
+                                <p class="text-xl font-bold text-gray-800">${db.recurring.filter(r => r.status === 'unpaid').length}</p>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <canvas id="revenueChart" height="100"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4">Clinic Stats</h3>
+                        <ul class="space-y-4">
+                            <li class="flex justify-between items-center">
+                                <span class="text-gray-500">Active Doctors</span>
+                                <span class="font-bold text-gray-800">${totalDoctors}</span>
+                            </li>
+                            <li class="flex justify-between items-center">
+                                <span class="text-gray-500">Total Services</span>
+                                <span class="font-bold text-gray-800">${db.services.length}</span>
+                            </li>
+                            <li class="flex justify-between items-center">
+                                <span class="text-gray-500">Appointments Today</span>
+                                <span class="font-bold text-gray-800">2</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            // Render Chart
+            new Chart($('revenueChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Revenue', 'Net Income', 'Recurring Exp', 'Recurring Add'],
+                    datasets: [{
+                        label: 'Financials (EGP)',
+                        data: [totalRevenue, netIncome, deductions, additions],
+                        backgroundColor: ['#10b981', '#0d9488', '#ef4444', '#22c55e'],
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // 2. GENERIC CRUD RENDERER (Patients, Doctors, Services)
+        function renderCRUD(container, table, headers, fields) {
+            let html = `
+                <div class="flex justify-between items-center mb-6">
+                    <div class="relative">
+                        <input type="text" placeholder="Search..." onkeyup="filterTable(this)" class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <button onclick="openModal('${table}')" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition">
+                        <i class="fa-solid fa-plus mr-2"></i> Add New
+                    </button>
+                </div>
+                <div class="glass-panel rounded-xl overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-500 text-sm uppercase">
+                            <tr>
+                                ${headers.map(h => `<th class="px-6 py-4 font-semibold">${h}</th>`).join('')}
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-sm">
+                            ${db[table].map(row => `
+                                <tr class="hover:bg-gray-50 transition">
+                                    ${fields.map(f => `<td class="px-6 py-4 text-gray-700">${row[f]}</td>`).join('')}
+                                    <td class="px-6 py-4 text-right">
+                                        <button onclick="deleteItem('${table}', ${row.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        // 3. APPOINTMENTS SPECIFIC
+        function renderAppointments(container) {
+            container.innerHTML = `
+                <div class="flex justify-between mb-6">
+                    <h3 class="text-xl font-bold">Schedule</h3>
+                    <button onclick="openModal('appointments')" class="bg-teal-600 text-white px-4 py-2 rounded-lg">New Appointment</button>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    ${db.appointments.map(app => {
+                        const pat = db.patients.find(p => p.id == app.patientId)?.name || 'Unknown';
+                        const doc = db.doctors.find(d => d.id == app.doctorId)?.name || 'Unknown';
+                        return `
+                        <div class="glass-panel p-4 rounded-lg flex justify-between items-center border-l-4 ${app.status === 'completed' ? 'border-green-500' : 'border-yellow-500'}">
+                            <div>
+                                <h4 class="font-bold text-lg">${pat}</h4>
+                                <p class="text-gray-500 text-sm"><i class="fa-solid fa-user-doctor mr-1"></i> ${doc}</p>
+                                <p class="text-gray-400 text-xs mt-1"><i class="fa-regular fa-clock mr-1"></i> ${new Date(app.date).toLocaleString()}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase ${app.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${app.status}</span>
+                                <div class="mt-2 space-x-2">
+                                    ${app.status !== 'completed' ? `<button onclick="updateStatus(${app.id}, 'completed')" class="text-xs bg-green-600 text-white px-2 py-1 rounded">Complete</button>` : ''}
+                                    <button onclick="deleteItem('appointments', ${app.id})" class="text-xs text-red-500 underline">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // 4. INVOICES (COMPLEX LOGIC)
+        function renderInvoices(container) {
+            container.innerHTML = `
+                <div class="flex justify-between mb-6">
+                    <h3 class="text-xl font-bold">Billing</h3>
+                    <button onclick="openModal('invoices')" class="bg-teal-600 text-white px-4 py-2 rounded-lg">Create Invoice</button>
+                </div>
+                <div class="glass-panel rounded-xl overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-gray-500 uppercase">
+                            <tr>
+                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">Patient</th>
+                                <th class="px-6 py-4">Doctor</th>
+                                <th class="px-6 py-4">Total</th>
+                                <th class="px-6 py-4">Doc Share</th>
+                                <th class="px-6 py-4 text-green-600">Net Revenue</th>
+                                <th class="px-6 py-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            ${db.invoices.map(inv => {
+                                const pat = db.patients.find(p => p.id == inv.patientId)?.name || 'Unknown';
+                                const doc = db.doctors.find(d => d.id == inv.doctorId)?.name || 'Unknown';
+                                return `
+                                <tr>
+                                    <td class="px-6 py-4">#${inv.id}</td>
+                                    <td class="px-6 py-4 font-bold">${pat}</td>
+                                    <td class="px-6 py-4">${doc}</td>
+                                    <td class="px-6 py-4">${formatMoney(inv.total)}</td>
+                                    <td class="px-6 py-4 text-red-400">-${formatMoney(inv.docShare)}</td>
+                                    <td class="px-6 py-4 font-bold text-green-600">${formatMoney(inv.net)}</td>
+                                    <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">${inv.status}</span></td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // 5. RECURRING (MIS)
+        function renderRecurring(container) {
+            container.innerHTML = `
+                <div class="flex justify-between mb-6">
+                    <h3 class="text-xl font-bold">Recurring Transactions</h3>
+                    <button onclick="openModal('recurring')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">Add Transaction</button>
+                </div>
+                <div class="glass-panel rounded-xl overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-gray-500 uppercase">
+                            <tr>
+                                <th class="px-6 py-4">Name</th>
+                                <th class="px-6 py-4">Type</th>
+                                <th class="px-6 py-4">Amount</th>
+                                <th class="px-6 py-4">Frequency</th>
+                                <th class="px-6 py-4">Next Due</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${db.recurring.map(r => `
+                                <tr class="border-b">
+                                    <td class="px-6 py-4 font-bold">${r.name}</td>
+                                    <td class="px-6 py-4"><span class="${r.type === 'deduction' ? 'text-red-500' : 'text-green-500'} bg-gray-100 px-2 py-1 rounded text-xs uppercase">${r.type}</span></td>
+                                    <td class="px-6 py-4">${formatMoney(r.amount)}</td>
+                                    <td class="px-6 py-4 capitalize">${r.frequency}</td>
+                                    <td class="px-6 py-4">${r.dueDate}</td>
+                                    <td class="px-6 py-4"><span class="${r.status === 'paid' ? 'text-green-600' : 'text-orange-500'} font-bold text-xs uppercase">${r.status}</span></td>
+                                    <td class="px-6 py-4">
+                                        ${r.status === 'unpaid' ? `<button onclick="payRecurring(${r.id})" class="bg-teal-600 text-white px-2 py-1 rounded text-xs">Mark Paid</button>` : ''}
+                                        <button onclick="deleteItem('recurring', ${r.id})" class="ml-2 text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // --- COMPONENT BUILDERS ---
+        function statCard(title, value, icon, colorClass) {
+            return `
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+                <div>
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wide">${title}</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-2">${value}</h3>
+                </div>
+                <div class="p-3 rounded-lg ${colorClass} text-white shadow-lg shadow-${colorClass.replace('bg-', '')}/30">
+                    <i class="fa-solid ${icon}"></i>
+                </div>
+            </div>`;
+        }
+
+        // --- MODAL & FORMS LOGIC ---
+        function openModal(type) {
+            const overlay = $('modal-overlay');
+            const title = $('modal-title');
+            const content = $('modal-content');
+            
+            overlay.classList.remove('hidden-modal');
+            overlay.classList.add('visible-modal');
+            title.innerText = `Add New ${type.slice(0, -1)}`; // Remove 's'
+
+            let formHtml = '';
+
+            if(type === 'patients') {
+                formHtml = `
+                    <form onsubmit="savePatient(event)" class="space-y-4">
+                        <input type="text" name="name" placeholder="Full Name" required class="w-full border p-2 rounded">
+                        <input type="text" name="phone" placeholder="Phone" required class="w-full border p-2 rounded">
+                        <select name="gender" class="w-full border p-2 rounded"><option>Male</option><option>Female</option></select>
+                        <textarea name="history" placeholder="Medical History" class="w-full border p-2 rounded"></textarea>
+                        <button class="w-full bg-teal-600 text-white py-2 rounded font-bold">Save</button>
+                    </form>
+                `;
+            } else if (type === 'doctors') {
+                formHtml = `
+                    <form onsubmit="saveDoctor(event)" class="space-y-4">
+                        <input type="text" name="name" placeholder="Dr. Name" required class="w-full border p-2 rounded">
+                        <input type="text" name="spec" placeholder="Specialization" required class="w-full border p-2 rounded">
+                        <input type="number" name="comm" placeholder="Commission %" required class="w-full border p-2 rounded">
+                        <button class="w-full bg-teal-600 text-white py-2 rounded font-bold">Save</button>
+                    </form>
+                `;
+            } else if (type === 'invoices') {
+                const patientOpts = db.patients.map(p =>`<option value="${p.id}">${p.name}</option>`).join('');
+                const doctorOpts = db.doctors.map(d =>`<option value="${d.id}">${d.name}</option>`).join('');
+                formHtml = `
+                    <form onsubmit="saveInvoice(event)" class="space-y-4">
+                        <select name="patientId" class="w-full border p-2 rounded" required><option value="">Select Patient</option>${patientOpts}</select>
+                        <select name="doctorId" class="w-full border p-2 rounded" required><option value="">Select Doctor</option>${doctorOpts}</select>
+                        <input type="number" name="amount" placeholder="Total Amount (EGP)" required class="w-full border p-2 rounded">
+                        <p class="text-xs text-gray-500">Doctor's share will be calculated automatically.</p>
+                        <button class="w-full bg-teal-600 text-white py-2 rounded font-bold">Generate Invoice</button>
+                    </form>
+                `;
+            } else if (type === 'recurring') {
+                formHtml = `
+                    <form onsubmit="saveRecurring(event)" class="space-y-4">
+                        <input type="text" name="name" placeholder="Item Name (e.g. Rent)" required class="w-full border p-2 rounded">
+                        <div class="flex space-x-2">
+                            <input type="number" name="amount" placeholder="Amount" required class="w-full border p-2 rounded">
+                            <select name="type" class="w-full border p-2 rounded"><option value="deduction">Deduction</option><option value="addition">Addition</option></select>
+                        </div>
+                        <select name="freq" class="w-full border p-2 rounded"><option value="monthly">Monthly</option><option value="one-time">One-Time</option></select>
+                        <input type="date" name="date" required class="w-full border p-2 rounded">
+                        <button class="w-full bg-teal-600 text-white py-2 rounded font-bold">Save Transaction</button>
+                    </form>
+                `;
+            } else if (type === 'appointments') {
+                const patientOpts = db.patients.map(p =>`<option value="${p.id}">${p.name}</option>`).join('');
+                const doctorOpts = db.doctors.map(d =>`<option value="${d.id}">${d.name}</option>`).join('');
+                formHtml = `
+                     <form onsubmit="saveAppointment(event)" class="space-y-4">
+                        <select name="patientId" class="w-full border p-2 rounded" required><option value="">Select Patient</option>${patientOpts}</select>
+                        <select name="doctorId" class="w-full border p-2 rounded" required><option value="">Select Doctor</option>${doctorOpts}</select>
+                        <input type="datetime-local" name="date" required class="w-full border p-2 rounded">
+                        <button class="w-full bg-teal-600 text-white py-2 rounded font-bold">Book Appointment</button>
+                    </form>
+                `;
+            }
+
+            content.innerHTML = formHtml;
+        }
+
+        function closeModal() {
+            const overlay = $('modal-overlay');
+            overlay.classList.remove('visible-modal');
+            overlay.classList.add('hidden-modal');
+        }
+
+        // --- FORM HANDLERS (Simulate PHP Controllers) ---
+
+        function savePatient(e) {
+            e.preventDefault();
+            const f = e.target;
+            db.patients.push({
+                id: Date.now(),
+                name: f.name.value,
+                phone: f.phone.value,
+                gender: f.gender.value,
+                history: f.history.value
+            });
+            saveDB();
+            closeModal();
+        }
+
+        function saveDoctor(e) {
+            e.preventDefault();
+            db.doctors.push({
+                id: Date.now(),
+                name: e.target.name.value,
+                specialization: e.target.spec.value,
+                commission: parseFloat(e.target.comm.value)
+            });
+            saveDB();
+            closeModal();
+        }
+
+        function saveInvoice(e) {
+            e.preventDefault();
+            const f = e.target;
+            const docId = parseInt(f.doctorId.value);
+            const total = parseFloat(f.amount.value);
+            
+            // Calc logic
+            const doctor = db.doctors.find(d => d.id === docId);
+            const docShare = (total * doctor.commission) / 100;
+            const net = total - docShare;
+
+            db.invoices.push({
+                id: Math.floor(Math.random() * 9000) + 1000,
+                patientId: parseInt(f.patientId.value),
+                doctorId: docId,
+                total: total,
+                docShare: docShare,
+                net: net,
+                status: 'paid', // default for demo
+                date: new Date().toISOString().split('T')[0]
+            });
+            saveDB();
+            closeModal();
+        }
+
+        function saveRecurring(e) {
+            e.preventDefault();
+            const f = e.target;
+            db.recurring.push({
+                id: Date.now(),
+                name: f.name.value,
+                type: f.type.value,
+                amount: parseFloat(f.amount.value),
+                frequency: f.freq.value,
+                dueDate: f.date.value,
+                status: 'unpaid'
+            });
+            saveDB();
+            closeModal();
+        }
+
+        function saveAppointment(e) {
+            e.preventDefault();
+            db.appointments.push({
+                id: Date.now(),
+                patientId: parseInt(e.target.patientId.value),
+                doctorId: parseInt(e.target.doctorId.value),
+                date: e.target.date.value,
+                status: 'pending'
+            });
+            saveDB();
+            closeModal();
+        }
+
+        function deleteItem(table, id) {
+            if(confirm('Are you sure you want to delete this item?')) {
+                db[table] = db[table].filter(item => item.id !== id);
+                saveDB();
+            }
+        }
+
+        function updateStatus(id, status) {
+            const app = db.appointments.find(a => a.id === id);
+            if(app) {
+                app.status = status;
+                saveDB();
+            }
+        }
+
+        function payRecurring(id) {
+            const item = db.recurring.find(r => r.id === id);
+            if(item) {
+                item.status = 'paid';
+                saveDB();
+            }
+        }
+
+        function filterTable(input) {
+            const term = input.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+            });
+        }
+
+        // --- INIT ---
+        $('current-date').innerText = new Date().toDateString();
+        renderCurrentView();
+
+    </script>
+</body>
+</html>
+
