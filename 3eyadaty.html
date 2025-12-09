@@ -118,8 +118,9 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- DATA LAYER (Simulating MySQL) ---
+        // 1. CONFIGURATION & STATE
         const DB_KEY = '3eyadaty_db_v1';
+        let currentView = 'dashboard'; // Declared first to avoid ReferenceError
         
         const initialData = {
             patients: [
@@ -152,11 +153,18 @@
             ]
         };
 
-        // Initialize DB
+        // --- CORE UTILS ---
+        const $ = (id) => document.getElementById(id);
+        const formatMoney = (amount) => new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(amount);
+
+        // --- DATABASE LOGIC (INITIALIZATION) ---
         let db = JSON.parse(localStorage.getItem(DB_KEY));
+        
+        // If DB doesn't exist, init it. Note: saveDB uses renderCurrentView, which uses currentView.
+        // Because currentView is defined at the top, this is now safe.
         if (!db) {
             db = initialData;
-            saveDB();
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
         }
 
         function saveDB() {
@@ -172,12 +180,6 @@
             }
         }
 
-        // --- CORE UTILS ---
-        const $ = (id) => document.getElementById(id);
-        const formatMoney = (amount) => new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(amount);
-        
-        let currentView = 'dashboard';
-
         // --- ROUTING ---
         function router(view) {
             currentView = view;
@@ -187,10 +189,12 @@
             if($(`nav-${view}`)) $(`nav-${view}`).classList.add('active');
             
             // Update Title
-            $('page-title').innerText = view.charAt(0).toUpperCase() + view.slice(1);
+            const titleEl = $('page-title');
+            if(titleEl) titleEl.innerText = view.charAt(0).toUpperCase() + view.slice(1);
             
             // Render View
             const container = $('main-container');
+            if(!container) return;
             container.innerHTML = '';
             
             switch(view) {
@@ -276,19 +280,24 @@
             `;
             
             // Render Chart
-            new Chart($('revenueChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Revenue', 'Net Income', 'Recurring Exp', 'Recurring Add'],
-                    datasets: [{
-                        label: 'Financials (EGP)',
-                        data: [totalRevenue, netIncome, deductions, additions],
-                        backgroundColor: ['#10b981', '#0d9488', '#ef4444', '#22c55e'],
-                        borderRadius: 6
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
+            setTimeout(() => {
+                const ctx = $('revenueChart');
+                if(ctx) {
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Revenue', 'Net Income', 'Recurring Exp', 'Recurring Add'],
+                            datasets: [{
+                                label: 'Financials (EGP)',
+                                data: [totalRevenue, netIncome, deductions, additions],
+                                backgroundColor: ['#10b981', '#0d9488', '#ef4444', '#22c55e'],
+                                borderRadius: 6
+                            }]
+                        },
+                        options: { responsive: true, plugins: { legend: { display: false } } }
+                    });
+                }
+            }, 100);
         }
 
         // 2. GENERIC CRUD RENDERER (Patients, Doctors, Services)
@@ -654,4 +663,5 @@
     </script>
 </body>
 </html>
+
 
