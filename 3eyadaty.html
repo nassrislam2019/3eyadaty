@@ -3,684 +3,572 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3eyadaty - Medical Management System</title>
+    <title>3eyadaty | Medical Management System</title>
     
-    <!-- Tailwind CSS (via CDN) -->
+    <!-- Tailwind CSS (UI Framework) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- FontAwesome (Icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Chart.js (Graphs) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <!-- Custom Styles -->
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .sidebar-link.active { background-color: #0f766e; color: white; }
-        .glass-panel { background: white; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .modal { transition: opacity 0.3s ease; }
-        .hidden-modal { opacity: 0; pointer-events: none; }
-        .visible-modal { opacity: 1; pointer-events: auto; }
+        /* Smooth Transitions */
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        .slide-in { animation: slideIn 0.3s ease-out; }
         
-        /* Custom Scrollbar for sleek look */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar-thumb { background: #0d9488; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0f766e; }
+
+        /* Toast Notification */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+        .toast { background: white; border-left: 4px solid #0d9488; padding: 15px 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; margin-top: 10px; display: flex; align-items: center; min-width: 300px; transform: translateX(100%); transition: transform 0.3s ease-out; }
+        .toast.show { transform: translateX(0); }
     </style>
 </head>
-<body class="text-gray-800 h-screen flex overflow-hidden">
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- SIDEBAR NAVIGATION -->
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-10 flex-shrink-0">
-        <div class="h-16 flex items-center px-6 border-b border-gray-100">
-            <i class="fa-solid fa-staff-snake text-teal-700 text-2xl mr-3"></i>
-            <h1 class="text-xl font-bold text-gray-800 tracking-tight">3eyadaty</h1>
-        </div>
-
-        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-            <button onclick="router('dashboard')" id="nav-dashboard" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-chart-line w-6"></i> Dashboard
-            </button>
-            
-            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Clinical</div>
-            <button onclick="router('patients')" id="nav-patients" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-users w-6"></i> Patients
-            </button>
-            <button onclick="router('doctors')" id="nav-doctors" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-user-doctor w-6"></i> Doctors
-            </button>
-            <button onclick="router('appointments')" id="nav-appointments" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-calendar-check w-6"></i> Appointments
-            </button>
-            
-            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Financial</div>
-            <button onclick="router('invoices')" id="nav-invoices" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-file-invoice-dollar w-6"></i> Invoices
-            </button>
-            <button onclick="router('recurring')" id="nav-recurring" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-money-bill-transfer w-6"></i> Recurring (MIS)
-            </button>
-            
-            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
-            <button onclick="router('services')" id="nav-services" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-stethoscope w-6"></i> Services
-            </button>
-            <button onclick="router('branches')" id="nav-branches" class="sidebar-link w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fa-solid fa-building w-6"></i> Branches
-            </button>
-        </nav>
-        
-        <div class="p-4 border-t border-gray-100">
-            <div class="flex items-center">
-                <div class="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs">
-                    AD
+    <!-- NAVIGATION BAR -->
+    <nav class="bg-teal-700 text-white shadow-lg z-50 flex-shrink-0">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-teal-700 p-2 rounded-lg">
+                    <i class="fa-solid fa-heart-pulse text-xl"></i>
                 </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-700">Admin User</p>
-                    <p class="text-xs text-gray-500">Super Admin</p>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">3eyadaty</h1>
+                    <p class="text-xs text-teal-200">Clinical Management v1.0</p>
                 </div>
             </div>
+
+            <!-- User Menu (Hidden if not logged in) -->
+            <div id="nav-menu" class="hidden flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=0d9488&color=fff" class="w-8 h-8 rounded-full border-2 border-white">
+                    <span id="user-display" class="font-medium text-sm"></span>
+                </div>
+                <button onclick="App.logout()" class="bg-teal-800 hover:bg-teal-900 text-white px-4 py-2 rounded text-sm transition shadow-inner">
+                    <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                </button>
+            </div>
         </div>
-    </aside>
+    </nav>
 
     <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-gray-50">
-        <!-- Top Header -->
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10">
-            <h2 id="page-title" class="text-xl font-bold text-gray-800">Dashboard</h2>
-            <div class="flex items-center space-x-4">
-                <span id="current-date" class="text-sm text-gray-500 font-medium"></span>
-                <button onclick="resetData()" class="text-xs text-red-500 hover:text-red-700 underline">Reset Demo Data</button>
-            </div>
-        </header>
+    <main class="flex-1 overflow-y-auto relative p-4 md:p-8" id="main-container">
+        
+        <!-- VIEW: AUTHENTICATION -->
+        <div id="view-auth" class="flex flex-col items-center justify-center min-h-[80vh] fade-in">
+            <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+                <div class="text-center mb-8">
+                    <div class="bg-teal-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-teal-600">
+                        <i class="fa-solid fa-user-doctor text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800" id="auth-title">Welcome Back</h2>
+                    <p class="text-gray-500 text-sm mt-1">Sign in to manage your patients</p>
+                </div>
 
-        <!-- Dynamic Content Injected Here -->
-        <div id="main-container" class="flex-1 overflow-auto p-8 relative">
-            <!-- Loading State -->
-            <div class="flex h-full items-center justify-center">
-                <div class="text-teal-600 font-bold animate-pulse">Loading System...</div>
+                <form id="auth-form" onsubmit="App.handleAuth(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2 ml-1">Email Address</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                            <input type="email" id="auth-email" required placeholder="admin@clinic.com" class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2 ml-1">Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                            <input type="password" id="auth-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-teal-600/30 transition transform hover:-translate-y-0.5">
+                        <span id="auth-btn-text">Login to Dashboard</span>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center pt-6 border-t border-gray-100">
+                    <p class="text-sm text-gray-600">
+                        <span id="auth-switch-text">Don't have an account?</span>
+                        <button onclick="App.toggleAuthMode()" class="text-teal-600 font-bold hover:underline ml-1" id="auth-switch-btn">Register Now</button>
+                    </p>
+                    <div class="mt-4 bg-blue-50 text-blue-700 text-xs p-3 rounded text-center">
+                        <strong>Demo Credentials:</strong> admin@clinic.com / password
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard" class="hidden container mx-auto max-w-6xl fade-in pb-10">
+            
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <!-- Total Patients -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Patients</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1" id="stat-total">0</h3>
+                    </div>
+                    <div class="p-4 bg-teal-50 text-teal-600 rounded-lg">
+                        <i class="fa-solid fa-users text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Appointments Today -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Today's Visits</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">4</h3>
+                    </div>
+                    <div class="p-4 bg-blue-50 text-blue-600 rounded-lg">
+                        <i class="fa-solid fa-calendar-day text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Pending Reports -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Pending Labs</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">12</h3>
+                    </div>
+                    <div class="p-4 bg-orange-50 text-orange-600 rounded-lg">
+                        <i class="fa-solid fa-flask text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Revenue -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Revenue (Mo)</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">$4.2k</h3>
+                    </div>
+                    <div class="p-4 bg-green-50 text-green-600 rounded-lg">
+                        <i class="fa-solid fa-dollar-sign text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div class="relative w-full md:w-96">
+                    <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="search-input" onkeyup="App.renderPatients()" placeholder="Search patients by name..." class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white shadow-sm">
+                </div>
+                <button onclick="App.openModal()" class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-lg shadow-md flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-plus"></i> Add New Patient
+                </button>
+            </div>
+
+            <!-- Patient Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">Patient Details</th>
+                                <th class="px-6 py-4">Condition / Diagnosis</th>
+                                <th class="px-6 py-4">Documents</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patient-list" class="divide-y divide-gray-100 text-sm">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden py-12 flex flex-col items-center justify-center text-center">
+                    <div class="bg-gray-50 p-4 rounded-full mb-3">
+                        <i class="fa-solid fa-clipboard-user text-gray-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-700">No patients found</h3>
+                    <p class="text-gray-500 text-sm mt-1">Add a new patient or adjust your search filters.</p>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- GLOBAL MODAL (POPUP) -->
-    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden-modal modal">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 id="modal-title" class="text-lg font-bold text-gray-800">Add New</h3>
-                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button>
+    <!-- MODAL: ADD/EDIT PATIENT -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg transform scale-95 transition-all slide-in" id="modal-content">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-800" id="modal-title">Add Patient</h3>
+                <button onclick="App.closeModal()" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
-            <div id="modal-content" class="p-6">
-                <!-- Forms injected here via JS -->
-            </div>
+            
+            <!-- Modal Body -->
+            <form id="patient-form" onsubmit="App.savePatient(event)" class="p-6 space-y-4">
+                <input type="hidden" id="p-id">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-gray-700 text-sm font-bold mb-1">Full Name</label>
+                        <input type="text" id="p-name" required placeholder="John Doe" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">Age</label>
+                        <input type="number" id="p-age" required placeholder="30" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">Status</label>
+                        <select id="p-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="Active">Active</option>
+                            <option value="Discharged">Discharged</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1">Diagnosis / Condition</label>
+                    <textarea id="p-condition" required rows="3" placeholder="e.g. Type 2 Diabetes, Regular Checkup..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1">Attach File</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                        <input type="file" id="p-file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="App.handleFileSelect(this)">
+                        <div id="file-label">
+                            <i class="fa-solid fa-cloud-arrow-up text-gray-400 text-2xl mb-1"></i>
+                            <p class="text-xs text-gray-500">Click to upload image or PDF</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="flex justify-end gap-3 mt-6 pt-2">
+                    <button type="button" onclick="App.closeModal()" class="px-5 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-bold shadow-md transition">Save Patient</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- APPLICATION LOGIC -->
     <script>
         /**
-         * 3eyadaty SPA Logic
-         * Handles routing, data simulation (localStorage), and DOM updates.
+         * 3eyadaty App Logic
+         * Implements Auth, CRUD, Persistence in one object namespace.
          */
+        const App = {
+            // Configuration
+            DB_KEY: '3eyadaty_db_v2',
+            state: {
+                user: null,
+                patients: [],
+                authMode: 'login'
+            },
 
-        // 1. STATE INITIALIZATION (Variable Hoisting)
-        const DB_KEY = '3eyadaty_db_v1';
-        let currentView = 'dashboard'; 
-        
-        // 2. DEFAULT DATA SEED
-        const initialData = {
-            patients: [
-                { id: 1, name: "Ahmed Ali", phone: "01012345678", dob: "1990-05-15", gender: "Male", history: "Hypertension" },
-                { id: 2, name: "Sara Mohamed", phone: "01198765432", dob: "1985-10-20", gender: "Female", history: "None" }
-            ],
-            doctors: [
-                { id: 1, name: "Dr. Khaled", specialization: "Dentist", commission: 20, branch: "Main" },
-                { id: 2, name: "Dr. Mona", specialization: "Dermatology", commission: 15, branch: "Downtown" }
-            ],
-            services: [
-                { id: 1, name: "Consultation", price: 300, category: "General" },
-                { id: 2, name: "Teeth Cleaning", price: 450, category: "Dental" }
-            ],
-            appointments: [
-                { id: 1, patientId: 1, doctorId: 1, date: "2023-10-25T14:00", status: "completed" },
-                { id: 2, patientId: 2, doctorId: 2, date: "2023-10-26T10:00", status: "pending" }
-            ],
-            invoices: [
-                { id: 1001, patientId: 1, doctorId: 1, total: 300, docShare: 60, net: 240, status: 'paid', date: '2023-10-25' }
-            ],
-            recurring: [
-                { id: 1, name: "Clinic Rent", type: "deduction", amount: 5000, frequency: "monthly", dueDate: "2023-10-01", status: "paid" },
-                { id: 2, name: "Nurse Salary", type: "deduction", amount: 2000, frequency: "monthly", dueDate: "2023-10-05", status: "unpaid" },
-                { id: 3, name: "Vending Machine", type: "addition", amount: 500, frequency: "monthly", dueDate: "2023-10-15", status: "paid" }
-            ],
-            branches: [
-                { id: 1, name: "Main Branch", address: "Cairo, Maadi" },
-                { id: 2, name: "Downtown", address: "Cairo, Tahrir" }
-            ]
+            // --- INITIALIZATION ---
+            init() {
+                this.loadData();
+                this.checkSession();
+                
+                // Demo Data Seeding if empty
+                if (this.state.patients.length === 0) {
+                    this.state.patients = [
+                        { id: 101, name: "Ahmed Ali", age: 45, condition: "Hypertension Stage 1", status: "Active", file: "blood_work.pdf", date: "2023-11-01" },
+                        { id: 102, name: "Sarah Connor", age: 32, condition: "Fractured Radius", status: "Active", file: "xray_arm.jpg", date: "2023-11-05" },
+                        { id: 103, name: "Mike Ross", age: 28, condition: "Routine Dental Cleaning", status: "Discharged", file: null, date: "2023-10-20" }
+                    ];
+                    this.saveData();
+                }
+            },
+
+            loadData() {
+                const stored = localStorage.getItem(this.DB_KEY);
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    this.state.patients = data.patients || [];
+                }
+            },
+
+            saveData() {
+                localStorage.setItem(this.DB_KEY, JSON.stringify({ patients: this.state.patients }));
+                this.updateStats();
+            },
+
+            // --- AUTHENTICATION ---
+            checkSession() {
+                const user = sessionStorage.getItem('3eyadaty_user');
+                if (user) {
+                    this.state.user = user;
+                    this.showDashboard();
+                } else {
+                    this.showAuth();
+                }
+            },
+
+            handleAuth(e) {
+                e.preventDefault();
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+
+                if (this.state.authMode === 'login') {
+                    // Simulating a backend check
+                    if ((email === 'admin@clinic.com' && password === 'password') || localStorage.getItem('custom_user_' + email) === password) {
+                        this.login(email);
+                    } else {
+                        this.showToast('Invalid credentials. Try admin@clinic.com / password', 'error');
+                    }
+                } else {
+                    // Register
+                    if (localStorage.getItem('custom_user_' + email)) {
+                        this.showToast('User already exists', 'error');
+                        return;
+                    }
+                    localStorage.setItem('custom_user_' + email, password);
+                    this.showToast('Registration successful! Please login.', 'success');
+                    this.toggleAuthMode();
+                }
+            },
+
+            login(email) {
+                sessionStorage.setItem('3eyadaty_user', email);
+                this.state.user = email;
+                this.showToast('Welcome back!', 'success');
+                this.showDashboard();
+            },
+
+            logout() {
+                sessionStorage.removeItem('3eyadaty_user');
+                this.state.user = null;
+                this.showAuth();
+                this.showToast('Logged out successfully', 'neutral');
+            },
+
+            toggleAuthMode() {
+                this.state.authMode = this.state.authMode === 'login' ? 'register' : 'login';
+                const isLogin = this.state.authMode === 'login';
+                
+                document.getElementById('auth-title').innerText = isLogin ? 'Welcome Back' : 'Create Account';
+                document.getElementById('auth-btn-text').innerText = isLogin ? 'Login to Dashboard' : 'Register Account';
+                document.getElementById('auth-switch-text').innerText = isLogin ? "Don't have an account?" : "Already have an account?";
+                document.getElementById('auth-switch-btn').innerText = isLogin ? "Register Now" : "Login";
+            },
+
+            // --- NAVIGATION / UI ---
+            showAuth() {
+                document.getElementById('view-auth').classList.remove('hidden');
+                document.getElementById('view-dashboard').classList.add('hidden');
+                document.getElementById('nav-menu').classList.add('hidden');
+            },
+
+            showDashboard() {
+                document.getElementById('view-auth').classList.add('hidden');
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('nav-menu').classList.remove('hidden');
+                document.getElementById('nav-menu').classList.add('flex'); // Ensure flex is applied
+                document.getElementById('user-display').innerText = this.state.user.split('@')[0];
+                this.renderPatients();
+            },
+
+            // --- PATIENT CRUD ---
+            renderPatients() {
+                const list = document.getElementById('patient-list');
+                const emptyState = document.getElementById('empty-state');
+                const searchTerm = document.getElementById('search-input').value.toLowerCase();
+                
+                list.innerHTML = '';
+
+                // Filter
+                const filtered = this.state.patients.filter(p => p.name.toLowerCase().includes(searchTerm) || p.condition.toLowerCase().includes(searchTerm));
+
+                this.updateStats();
+
+                if (filtered.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                emptyState.classList.add('hidden');
+
+                filtered.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-100 hover:bg-gray-50 transition';
+                    
+                    // Status Badge Logic
+                    const statusColors = {
+                        'Active': 'bg-green-100 text-green-700',
+                        'Discharged': 'bg-gray-100 text-gray-700',
+                        'Pending': 'bg-orange-100 text-orange-700'
+                    };
+                    const badgeClass = statusColors[p.status] || 'bg-gray-100';
+
+                    // File HTML
+                    const fileHtml = p.file 
+                        ? `<a href="#" class="flex items-center gap-1 text-teal-600 hover:underline text-xs font-medium bg-teal-50 px-2 py-1 rounded w-max"><i class="fa-solid fa-paperclip"></i> ${p.file}</a>` 
+                        : `<span class="text-gray-400 text-xs italic">No attachment</span>`;
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-gray-400 font-mono text-xs">#${p.id}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-gray-800">${p.name}</div>
+                            <div class="text-xs text-gray-500">${p.age} years old</div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-700 text-sm max-w-xs truncate">${p.condition}</td>
+                        <td class="px-6 py-4">${fileHtml}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${badgeClass}">${p.status}</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="App.editPatient(${p.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 w-8 h-8 rounded-full transition mr-1"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="App.deletePatient(${p.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 w-8 h-8 rounded-full transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    `;
+                    list.appendChild(row);
+                });
+            },
+
+            updateStats() {
+                document.getElementById('stat-total').innerText = this.state.patients.length;
+            },
+
+            // --- MODALS & FORMS ---
+            openModal(id = null) {
+                const modal = document.getElementById('modal-overlay');
+                const title = document.getElementById('modal-title');
+                const form = document.getElementById('patient-form');
+                const fileLabel = document.getElementById('file-label');
+                
+                modal.classList.remove('hidden');
+                
+                if (id) {
+                    const p = this.state.patients.find(pat => pat.id === id);
+                    title.innerText = 'Edit Patient Record';
+                    document.getElementById('p-id').value = p.id;
+                    document.getElementById('p-name').value = p.name;
+                    document.getElementById('p-age').value = p.age;
+                    document.getElementById('p-condition').value = p.condition;
+                    document.getElementById('p-status').value = p.status;
+                    fileLabel.innerHTML = p.file ? `<i class="fa-solid fa-check text-green-500 text-2xl mb-1"></i><p class="text-xs text-green-600 font-bold">${p.file}</p>` : fileLabel.innerHTML;
+                } else {
+                    title.innerText = 'Add New Patient';
+                    form.reset();
+                    document.getElementById('p-id').value = '';
+                    fileLabel.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-gray-400 text-2xl mb-1"></i><p class="text-xs text-gray-500">Click to upload image or PDF</p>`;
+                }
+            },
+
+            closeModal() {
+                document.getElementById('modal-overlay').classList.add('hidden');
+            },
+
+            handleFileSelect(input) {
+                if(input.files && input.files[0]) {
+                    const label = document.getElementById('file-label');
+                    label.innerHTML = `<i class="fa-solid fa-file-arrow-up text-teal-500 text-2xl mb-1"></i><p class="text-xs text-gray-800 font-bold">${input.files[0].name}</p>`;
+                }
+            },
+
+            savePatient(e) {
+                e.preventDefault();
+                const id = document.getElementById('p-id').value;
+                const name = document.getElementById('p-name').value;
+                const age = document.getElementById('p-age').value;
+                const condition = document.getElementById('p-condition').value;
+                const status = document.getElementById('p-status').value;
+                const fileInput = document.getElementById('p-file');
+                
+                // Simulate file upload logic
+                let fileName = null;
+                if (fileInput.files.length > 0) {
+                    fileName = fileInput.files[0].name;
+                } else if (id) {
+                    // Keep existing file if editing and no new file selected
+                    const existing = this.state.patients.find(p => p.id == id);
+                    if(existing) fileName = existing.file;
+                }
+
+                if (id) {
+                    // Update
+                    const index = this.state.patients.findIndex(p => p.id == id);
+                    if (index > -1) {
+                        this.state.patients[index] = { ...this.state.patients[index], name, age, condition, status, file: fileName };
+                        this.showToast('Patient record updated', 'success');
+                    }
+                } else {
+                    // Create
+                    const newId = this.state.patients.length > 0 ? Math.max(...this.state.patients.map(p => p.id)) + 1 : 101;
+                    this.state.patients.unshift({ // Add to top
+                        id: newId,
+                        name,
+                        age,
+                        condition,
+                        status,
+                        file: fileName,
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    this.showToast('New patient created successfully', 'success');
+                }
+
+                this.saveData();
+                this.closeModal();
+                this.renderPatients();
+            },
+
+            editPatient(id) {
+                this.openModal(id);
+            },
+
+            deletePatient(id) {
+                if (confirm('Are you sure you want to delete this record? This cannot be undone.')) {
+                    this.state.patients = this.state.patients.filter(p => p.id !== id);
+                    this.saveData();
+                    this.renderPatients();
+                    this.showToast('Patient record deleted', 'error');
+                }
+            },
+
+            // --- NOTIFICATIONS ---
+            showToast(message, type = 'success') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                
+                const iconColor = type === 'success' ? 'text-green-500' : (type === 'error' ? 'text-red-500' : 'text-gray-500');
+                const borderColors = { 'success': '#0d9488', 'error': '#ef4444', 'neutral': '#6b7280' };
+                const iconClass = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle');
+
+                toast.style.borderLeftColor = borderColors[type];
+                toast.innerHTML = `
+                    <i class="fa-solid ${iconClass} ${iconColor} text-xl mr-3"></i>
+                    <p class="font-medium text-sm text-gray-700">${message}</p>
+                `;
+
+                container.appendChild(toast);
+
+                // Animate In
+                setTimeout(() => toast.classList.add('show'), 100);
+
+                // Remove after 3s
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
         };
 
-        // 3. UTILITY FUNCTIONS
-        const $ = (id) => document.getElementById(id);
-        const formatMoney = (amount) => new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(amount);
-
-        // 4. ROUTER ENGINE
-        function router(view) {
-            currentView = view;
-            
-            // 4.1 Update Sidebar UI
-            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-            if($(`nav-${view}`)) $(`nav-${view}`).classList.add('active');
-            
-            // 4.2 Update Title
-            const titleEl = $('page-title');
-            if(titleEl) titleEl.innerText = view.charAt(0).toUpperCase() + view.slice(1);
-            
-            // 4.3 Select Container
-            const container = $('main-container');
-            if(!container) return;
-            container.innerHTML = ''; // Clear previous view
-            
-            // 4.4 Render Specific View
-            switch(view) {
-                case 'dashboard': renderDashboard(container); break;
-                case 'patients': renderCRUD(container, 'patients', ['Name', 'Phone', 'Gender'], ['name', 'phone', 'gender']); break;
-                case 'doctors': renderCRUD(container, 'doctors', ['Name', 'Specialization', 'Commission %'], ['name', 'specialization', 'commission']); break;
-                case 'services': renderCRUD(container, 'services', ['Name', 'Price', 'Category'], ['name', 'price', 'category']); break;
-                case 'appointments': renderAppointments(container); break;
-                case 'invoices': renderInvoices(container); break;
-                case 'recurring': renderRecurring(container); break;
-                case 'branches': renderCRUD(container, 'branches', ['Name', 'Address'], ['name', 'address']); break;
-            }
-        }
-
-        function renderCurrentView() {
-            router(currentView);
-        }
-
-        // 5. DATABASE MANAGEMENT (Simulated)
-        let db;
-        try {
-            db = JSON.parse(localStorage.getItem(DB_KEY));
-        } catch(e) {
-            console.error("DB Corrupt, resetting");
-        }
-        
-        // Robustness Check: If DB missing or key tables missing, hard reset
-        if (!db || !db.patients || !db.doctors || !db.recurring) {
-            console.log("Initializing new database...");
-            db = initialData;
-            localStorage.setItem(DB_KEY, JSON.stringify(db));
-        }
-
-        function saveDB() {
-            localStorage.setItem(DB_KEY, JSON.stringify(db));
-            renderCurrentView(); // Live reload
-        }
-
-        function resetData() {
-            if(confirm("Are you sure? This will erase all changes and reset to default data.")) {
-                db = initialData;
-                saveDB();
-                location.reload();
-            }
-        }
-
-        // 6. VIEW RENDERERS
-
-        function renderDashboard(container) {
-            // Stats Calculations
-            const totalPatients = db.patients.length;
-            const totalDoctors = db.doctors.length;
-            const totalRevenue = db.invoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0);
-            const netIncome = db.invoices.reduce((sum, inv) => sum + parseFloat(inv.net), 0);
-            
-            const deductions = db.recurring.filter(r => r.type === 'deduction').reduce((sum, r) => sum + parseFloat(r.amount), 0);
-            const additions = db.recurring.filter(r => r.type === 'addition').reduce((sum, r) => sum + parseFloat(r.amount), 0);
-            
-            container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    ${statCard('Total Patients', totalPatients, 'fa-users', 'bg-blue-500')}
-                    ${statCard('Total Revenue', formatMoney(totalRevenue), 'fa-wallet', 'bg-green-500')}
-                    ${statCard('Net Income', formatMoney(netIncome), 'fa-chart-line', 'bg-teal-600')}
-                    ${statCard('Recurring Exp.', formatMoney(deductions), 'fa-money-bill-wave', 'bg-red-500')}
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- MIS Section -->
-                    <div class="glass-panel rounded-xl p-6 lg:col-span-2">
-                        <h3 class="text-lg font-bold text-gray-700 mb-4">Recurring Items (MIS)</h3>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="p-4 bg-red-50 rounded-lg border border-red-100">
-                                <p class="text-xs text-red-500 uppercase font-bold">Deductions</p>
-                                <p class="text-xl font-bold text-gray-800">${formatMoney(deductions)}</p>
-                            </div>
-                            <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                                <p class="text-xs text-green-600 uppercase font-bold">Additions</p>
-                                <p class="text-xl font-bold text-gray-800">${formatMoney(additions)}</p>
-                            </div>
-                            <div class="p-4 bg-orange-50 rounded-lg border border-orange-100">
-                                <p class="text-xs text-orange-600 uppercase font-bold">Unpaid</p>
-                                <p class="text-xl font-bold text-gray-800">${db.recurring.filter(r => r.status === 'unpaid').length}</p>
-                            </div>
-                        </div>
-                        <div class="mt-6">
-                            <canvas id="revenueChart" style="max-height: 200px;"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Side Stats -->
-                    <div class="glass-panel rounded-xl p-6">
-                        <h3 class="text-lg font-bold text-gray-700 mb-4">Quick Stats</h3>
-                        <ul class="space-y-4">
-                            <li class="flex justify-between items-center">
-                                <span class="text-gray-500">Doctors</span>
-                                <span class="font-bold text-gray-800">${totalDoctors}</span>
-                            </li>
-                            <li class="flex justify-between items-center">
-                                <span class="text-gray-500">Services</span>
-                                <span class="font-bold text-gray-800">${db.services.length}</span>
-                            </li>
-                            <li class="flex justify-between items-center">
-                                <span class="text-gray-500">Today's Appts</span>
-                                <span class="font-bold text-gray-800">2</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            // Render Chart (with delay to ensure DOM is ready)
-            setTimeout(() => {
-                const ctx = $('revenueChart');
-                if(ctx) {
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Total Revenue', 'Net Income', 'Recur. Exp', 'Recur. Add'],
-                            datasets: [{
-                                label: 'EGP',
-                                data: [totalRevenue, netIncome, deductions, additions],
-                                backgroundColor: ['#10b981', '#0d9488', '#ef4444', '#22c55e'],
-                                borderRadius: 6
-                            }]
-                        },
-                        options: { responsive: true, plugins: { legend: { display: false } } }
-                    });
-                }
-            }, 100);
-        }
-
-        function renderCRUD(container, table, headers, fields) {
-            let html = `
-                <div class="flex justify-between items-center mb-6">
-                    <div class="relative">
-                        <input type="text" placeholder="Search..." onkeyup="filterTable(this)" class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                        <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
-                    </div>
-                    <button onclick="openModal('${table}')" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition shadow-lg shadow-teal-600/20">
-                        <i class="fa-solid fa-plus mr-2"></i> Add New
-                    </button>
-                </div>
-                <div class="glass-panel rounded-xl overflow-hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 text-gray-500 text-sm uppercase">
-                            <tr>
-                                ${headers.map(h => `<th class="px-6 py-4 font-semibold">${h}</th>`).join('')}
-                                <th class="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm">
-                            ${db[table].map(row => `
-                                <tr class="hover:bg-gray-50 transition">
-                                    ${fields.map(f => `<td class="px-6 py-4 text-gray-700">${row[f]}</td>`).join('')}
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="deleteItem('${table}', ${row.id})" class="text-red-500 hover:text-red-700 transition"><i class="fa-solid fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            container.innerHTML = html;
-        }
-
-        function renderAppointments(container) {
-            container.innerHTML = `
-                <div class="flex justify-between mb-6">
-                    <h3 class="text-xl font-bold">Schedule</h3>
-                    <button onclick="openModal('appointments')" class="bg-teal-600 text-white px-4 py-2 rounded-lg shadow-lg">New Appointment</button>
-                </div>
-                <div class="grid grid-cols-1 gap-4">
-                    ${db.appointments.map(app => {
-                        const pat = db.patients.find(p => p.id == app.patientId)?.name || 'Unknown';
-                        const doc = db.doctors.find(d => d.id == app.doctorId)?.name || 'Unknown';
-                        return `
-                        <div class="glass-panel p-4 rounded-lg flex justify-between items-center border-l-4 ${app.status === 'completed' ? 'border-green-500' : 'border-yellow-500'}">
-                            <div>
-                                <h4 class="font-bold text-lg">${pat}</h4>
-                                <p class="text-gray-500 text-sm"><i class="fa-solid fa-user-doctor mr-1"></i> ${doc}</p>
-                                <p class="text-gray-400 text-xs mt-1"><i class="fa-regular fa-clock mr-1"></i> ${new Date(app.date).toLocaleString()}</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase ${app.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${app.status}</span>
-                                <div class="mt-2 space-x-2">
-                                    ${app.status !== 'completed' ? `<button onclick="updateStatus(${app.id}, 'completed')" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition">Complete</button>` : ''}
-                                    <button onclick="deleteItem('appointments', ${app.id})" class="text-xs text-red-500 hover:text-red-700 underline">Cancel</button>
-                                </div>
-                            </div>
-                        </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        function renderInvoices(container) {
-            container.innerHTML = `
-                <div class="flex justify-between mb-6">
-                    <h3 class="text-xl font-bold">Billing</h3>
-                    <button onclick="openModal('invoices')" class="bg-teal-600 text-white px-4 py-2 rounded-lg shadow-lg">Create Invoice</button>
-                </div>
-                <div class="glass-panel rounded-xl overflow-hidden">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-gray-500 uppercase">
-                            <tr>
-                                <th class="px-6 py-4">ID</th>
-                                <th class="px-6 py-4">Patient</th>
-                                <th class="px-6 py-4">Doctor</th>
-                                <th class="px-6 py-4">Total</th>
-                                <th class="px-6 py-4">Doc Share</th>
-                                <th class="px-6 py-4 text-green-600">Net Revenue</th>
-                                <th class="px-6 py-4">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            ${db.invoices.map(inv => {
-                                const pat = db.patients.find(p => p.id == inv.patientId)?.name || 'Unknown';
-                                const doc = db.doctors.find(d => d.id == inv.doctorId)?.name || 'Unknown';
-                                return `
-                                <tr>
-                                    <td class="px-6 py-4 font-mono text-gray-400">#${inv.id}</td>
-                                    <td class="px-6 py-4 font-bold text-gray-700">${pat}</td>
-                                    <td class="px-6 py-4">${doc}</td>
-                                    <td class="px-6 py-4 font-medium">${formatMoney(inv.total)}</td>
-                                    <td class="px-6 py-4 text-red-400">-${formatMoney(inv.docShare)}</td>
-                                    <td class="px-6 py-4 font-bold text-green-600">${formatMoney(inv.net)}</td>
-                                    <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold uppercase">${inv.status}</span></td>
-                                </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        function renderRecurring(container) {
-            container.innerHTML = `
-                <div class="flex justify-between mb-6">
-                    <h3 class="text-xl font-bold">Recurring Transactions</h3>
-                    <button onclick="openModal('recurring')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-indigo-700 transition">Add Transaction</button>
-                </div>
-                <div class="glass-panel rounded-xl overflow-hidden">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-gray-500 uppercase">
-                            <tr>
-                                <th class="px-6 py-4">Name</th>
-                                <th class="px-6 py-4">Type</th>
-                                <th class="px-6 py-4">Amount</th>
-                                <th class="px-6 py-4">Frequency</th>
-                                <th class="px-6 py-4">Next Due</th>
-                                <th class="px-6 py-4">Status</th>
-                                <th class="px-6 py-4">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            ${db.recurring.map(r => `
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-bold text-gray-700">${r.name}</td>
-                                    <td class="px-6 py-4"><span class="${r.type === 'deduction' ? 'text-red-600 bg-red-50 ring-1 ring-red-200' : 'text-green-600 bg-green-50 ring-1 ring-green-200'} px-2 py-1 rounded text-xs uppercase font-bold tracking-wide">${r.type}</span></td>
-                                    <td class="px-6 py-4 font-medium">${formatMoney(r.amount)}</td>
-                                    <td class="px-6 py-4 capitalize text-gray-500">${r.frequency}</td>
-                                    <td class="px-6 py-4">${r.dueDate}</td>
-                                    <td class="px-6 py-4"><span class="${r.status === 'paid' ? 'text-green-600' : 'text-orange-500'} font-bold text-xs uppercase">${r.status}</span></td>
-                                    <td class="px-6 py-4 flex items-center gap-2">
-                                        ${r.status === 'unpaid' ? `<button onclick="payRecurring(${r.id})" class="bg-teal-600 text-white px-2 py-1 rounded text-xs hover:bg-teal-700 transition">Pay</button>` : ''}
-                                        <button onclick="deleteItem('recurring', ${r.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        // 7. HELPER COMPONENTS
-
-        function statCard(title, value, icon, colorClass) {
-            return `
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between hover:shadow-md transition-shadow">
-                <div>
-                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wide">${title}</p>
-                    <h3 class="text-2xl font-bold text-gray-800 mt-2">${value}</h3>
-                </div>
-                <div class="p-3 rounded-lg ${colorClass} text-white shadow-lg shadow-${colorClass.replace('bg-', '')}/30">
-                    <i class="fa-solid ${icon}"></i>
-                </div>
-            </div>`;
-        }
-
-        // 8. MODAL SYSTEM
-
-        function openModal(type) {
-            const overlay = $('modal-overlay');
-            const title = $('modal-title');
-            const content = $('modal-content');
-            
-            overlay.classList.remove('hidden-modal');
-            overlay.classList.add('visible-modal');
-            title.innerText = `Add New ${type.slice(0, -1)}`; // Remove plural 's'
-
-            let formHtml = '';
-
-            if(type === 'patients') {
-                formHtml = `
-                    <form onsubmit="savePatient(event)" class="space-y-4">
-                        <input type="text" name="name" placeholder="Full Name" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        <input type="text" name="phone" placeholder="Phone" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        <select name="gender" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"><option>Male</option><option>Female</option></select>
-                        <textarea name="history" placeholder="Medical History" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"></textarea>
-                        <button type="submit" class="w-full bg-teal-600 text-white py-2 rounded font-bold hover:bg-teal-700 transition">Save Patient</button>
-                    </form>
-                `;
-            } else if (type === 'doctors') {
-                formHtml = `
-                    <form onsubmit="saveDoctor(event)" class="space-y-4">
-                        <input type="text" name="name" placeholder="Dr. Name" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        <input type="text" name="spec" placeholder="Specialization" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        <input type="number" name="comm" placeholder="Commission %" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        <button type="submit" class="w-full bg-teal-600 text-white py-2 rounded font-bold hover:bg-teal-700 transition">Save Doctor</button>
-                    </form>
-                `;
-            } else if (type === 'invoices') {
-                const patientOpts = db.patients.map(p =>`<option value="${p.id}">${p.name}</option>`).join('');
-                const doctorOpts = db.doctors.map(d =>`<option value="${d.id}">${d.name}</option>`).join('');
-                formHtml = `
-                    <form onsubmit="saveInvoice(event)" class="space-y-4">
-                        <select name="patientId" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500" required><option value="">Select Patient</option>${patientOpts}</select>
-                        <select name="doctorId" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500" required><option value="">Select Doctor</option>${doctorOpts}</select>
-                        <input type="number" name="amount" placeholder="Total Amount (EGP)" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500">
-                        <p class="text-xs text-gray-500">Doctor's share & Net Revenue calculated automatically.</p>
-                        <button type="submit" class="w-full bg-teal-600 text-white py-2 rounded font-bold hover:bg-teal-700 transition">Generate Invoice</button>
-                    </form>
-                `;
-            } else if (type === 'recurring') {
-                formHtml = `
-                    <form onsubmit="saveRecurring(event)" class="space-y-4">
-                        <input type="text" name="name" placeholder="Item Name (e.g. Rent)" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500">
-                        <div class="flex space-x-2">
-                            <input type="number" name="amount" placeholder="Amount" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500">
-                            <select name="type" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500"><option value="deduction">Deduction</option><option value="addition">Addition</option></select>
-                        </div>
-                        <select name="freq" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500"><option value="monthly">Monthly</option><option value="one-time">One-Time</option></select>
-                        <input type="date" name="date" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500">
-                        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded font-bold hover:bg-indigo-700 transition">Save Transaction</button>
-                    </form>
-                `;
-            } else if (type === 'appointments') {
-                const patientOpts = db.patients.map(p =>`<option value="${p.id}">${p.name}</option>`).join('');
-                const doctorOpts = db.doctors.map(d =>`<option value="${d.id}">${d.name}</option>`).join('');
-                formHtml = `
-                     <form onsubmit="saveAppointment(event)" class="space-y-4">
-                        <select name="patientId" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500" required><option value="">Select Patient</option>${patientOpts}</select>
-                        <select name="doctorId" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500" required><option value="">Select Doctor</option>${doctorOpts}</select>
-                        <input type="datetime-local" name="date" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500">
-                        <button type="submit" class="w-full bg-teal-600 text-white py-2 rounded font-bold hover:bg-teal-700 transition">Book Appointment</button>
-                    </form>
-                `;
-            }
-
-            content.innerHTML = formHtml;
-        }
-
-        function closeModal() {
-            const overlay = $('modal-overlay');
-            overlay.classList.remove('visible-modal');
-            overlay.classList.add('hidden-modal');
-        }
-
-        // 9. CONTROLLERS (Simulating Backend Logic)
-
-        function savePatient(e) {
-            e.preventDefault();
-            const f = e.target;
-            db.patients.push({
-                id: Date.now(),
-                name: f.name.value,
-                phone: f.phone.value,
-                gender: f.gender.value,
-                history: f.history.value
-            });
-            saveDB();
-            closeModal();
-        }
-
-        function saveDoctor(e) {
-            e.preventDefault();
-            db.doctors.push({
-                id: Date.now(),
-                name: e.target.name.value,
-                specialization: e.target.spec.value,
-                commission: parseFloat(e.target.comm.value)
-            });
-            saveDB();
-            closeModal();
-        }
-
-        function saveInvoice(e) {
-            e.preventDefault();
-            const f = e.target;
-            const docId = parseInt(f.doctorId.value);
-            const total = parseFloat(f.amount.value);
-            
-            // Logic: Calc Net Revenue
-            const doctor = db.doctors.find(d => d.id === docId);
-            const docShare = (total * doctor.commission) / 100;
-            const net = total - docShare;
-
-            db.invoices.push({
-                id: Math.floor(Math.random() * 9000) + 1000,
-                patientId: parseInt(f.patientId.value),
-                doctorId: docId,
-                total: total,
-                docShare: docShare,
-                net: net,
-                status: 'paid', // Default for demo
-                date: new Date().toISOString().split('T')[0]
-            });
-            saveDB();
-            closeModal();
-        }
-
-        function saveRecurring(e) {
-            e.preventDefault();
-            const f = e.target;
-            db.recurring.push({
-                id: Date.now(),
-                name: f.name.value,
-                type: f.type.value,
-                amount: parseFloat(f.amount.value),
-                frequency: f.freq.value,
-                dueDate: f.date.value,
-                status: 'unpaid'
-            });
-            saveDB();
-            closeModal();
-        }
-
-        function saveAppointment(e) {
-            e.preventDefault();
-            db.appointments.push({
-                id: Date.now(),
-                patientId: parseInt(e.target.patientId.value),
-                doctorId: parseInt(e.target.doctorId.value),
-                date: e.target.date.value,
-                status: 'pending'
-            });
-            saveDB();
-            closeModal();
-        }
-
-        function deleteItem(table, id) {
-            if(confirm('Are you sure you want to delete this item?')) {
-                db[table] = db[table].filter(item => item.id !== id);
-                saveDB();
-            }
-        }
-
-        function updateStatus(id, status) {
-            const app = db.appointments.find(a => a.id === id);
-            if(app) {
-                app.status = status;
-                saveDB();
-            }
-        }
-
-        function payRecurring(id) {
-            const item = db.recurring.find(r => r.id === id);
-            if(item) {
-                item.status = 'paid';
-                saveDB();
-            }
-        }
-
-        function filterTable(input) {
-            const term = input.value.toLowerCase();
-            const rows = document.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-            });
-        }
-
-        // 10. ENTRY POINT
-        $('current-date').innerText = new Date().toDateString();
-        
-        // Ensure everything is ready before rendering
-        if(typeof db !== 'undefined') {
-            renderCurrentView();
-        } else {
-            console.log("Waiting for DB init...");
-            setTimeout(renderCurrentView, 100);
-        }
+        // Boot the App
+        document.addEventListener('DOMContentLoaded', () => App.init());
 
     </script>
 </body>
 </html>
-
-
