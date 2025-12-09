@@ -119,8 +119,9 @@
     <!-- JAVASCRIPT LOGIC -->
     <script>
         // 1. CONFIGURATION & STATE
+        // Defined at the top to prevent 'Cannot access before initialization' errors
         const DB_KEY = '3eyadaty_db_v1';
-        let currentView = 'dashboard'; // Declared first to avoid ReferenceError
+        let currentView = 'dashboard'; 
         
         const initialData = {
             patients: [
@@ -160,26 +161,6 @@
         // --- DATABASE LOGIC (INITIALIZATION) ---
         let db = JSON.parse(localStorage.getItem(DB_KEY));
         
-        // If DB doesn't exist, init it. Note: saveDB uses renderCurrentView, which uses currentView.
-        // Because currentView is defined at the top, this is now safe.
-        if (!db) {
-            db = initialData;
-            localStorage.setItem(DB_KEY, JSON.stringify(db));
-        }
-
-        function saveDB() {
-            localStorage.setItem(DB_KEY, JSON.stringify(db));
-            renderCurrentView(); // Re-render active view on data change
-        }
-
-        function resetData() {
-            if(confirm("Reset all data to defaults?")) {
-                db = initialData;
-                saveDB();
-                location.reload();
-            }
-        }
-
         // --- ROUTING ---
         function router(view) {
             currentView = view;
@@ -211,6 +192,25 @@
 
         function renderCurrentView() {
             router(currentView);
+        }
+
+        function saveDB() {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+            renderCurrentView(); // Re-render active view on data change
+        }
+
+        // Initialize DB if empty
+        if (!db) {
+            db = initialData;
+            saveDB(); // This now works because renderCurrentView and currentView are defined
+        }
+
+        function resetData() {
+            if(confirm("Reset all data to defaults?")) {
+                db = initialData;
+                saveDB();
+                location.reload();
+            }
         }
 
         // --- VIEW CONTROLLERS ---
@@ -658,10 +658,10 @@
 
         // --- INIT ---
         $('current-date').innerText = new Date().toDateString();
+        // Force initial render to prevent blank screen
         renderCurrentView();
 
     </script>
 </body>
 </html>
-
 
