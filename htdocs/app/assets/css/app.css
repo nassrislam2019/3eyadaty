@@ -1,0 +1,57 @@
+body {
+    background: #f5f6fa;
+    font-family: 'Tajawal', sans-serif;
+}
+.app-container {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+.topbar {
+    background: #0d6efd;
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.topbar-user {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+    margin-left: 10px;
+}
+.sidebar {
+    width: 230px;
+    background: #1f2a37;
+    color: #fff;
+    padding: 20px;
+    min-height: 100vh;
+}
+.sidebar .nav-link {
+    color: #dce3eb;
+    margin-bottom: 6px;
+}
+.sidebar .nav-link:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+}
+.content {
+    margin-right: 230px;
+    padding: 20px;
+}
+@media (max-width: 992px) {
+    .sidebar {
+        width: 100%;
+        min-height: auto;
+    }
+    .content {
+        margin-right: 0;
+    }
+}
